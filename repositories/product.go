@@ -1,0 +1,45 @@
+package repositories
+
+import (
+	"party/models"
+
+	"gorm.io/gorm"
+)
+
+type ProductRepositories interface {
+	GetProduct(ID int) (models.Product, error)
+	CreateProduct(product models.Product) (models.Product, error)
+	UpdateProduct(product models.Product) (models.Product, error)
+	FindProduct(limit int, offset int) ([]models.Product, error)
+}
+func RepositoriesProduct(db *gorm.DB) *repositories {
+	return &repositories{db}
+}
+
+
+func (r *repositories) GetProduct(ID int) (models.Product, error) {
+	var product models.Product
+	// not yet using category relation, cause this step doesnt Belong to Many
+	err := r.db.First(&product, ID).Error
+
+	return product, err
+}
+
+func (r *repositories) CreateProduct(product models.Product) (models.Product, error) {
+	err := r.db.Create(&product).Error
+
+	return product, err
+}
+
+	func (r *repositories) UpdateProduct(product models.Product) (models.Product, error) {
+		err := r.db.Save(&product).Error
+
+		return product, err
+}
+
+func (r *repositories) FindProduct(limit int, offset int) ([]models.Product, error) {
+	var product []models.Product
+	err := r.db.Limit(limit).Offset(offset).Find(&product).Error
+
+	return product, err
+}
