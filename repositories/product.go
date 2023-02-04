@@ -10,7 +10,7 @@ type ProductRepositories interface {
 	GetProduct(ID int) (models.Product, error)
 	CreateProduct(product models.Product) (models.Product, error)
 	UpdateProduct(product models.Product) (models.Product, error)
-	FindProduct(limit int, offset int) ([]models.Product, error)
+	FindProduct(limit int, page int) ([]models.Product, error)
 }
 func RepositoriesProduct(db *gorm.DB) *repositories {
 	return &repositories{db}
@@ -37,9 +37,13 @@ func (r *repositories) CreateProduct(product models.Product) (models.Product, er
 		return product, err
 }
 
-func (r *repositories) FindProduct(limit int, offset int) ([]models.Product, error) {
+func (r *repositories) FindProduct(limit int, page int) ([]models.Product, error) {
 	var product []models.Product
-	err := r.db.Limit(limit).Offset(offset).Find(&product).Error
+	if page <= 1 {
+		page = 0
+	}
+
+	err := r.db.Limit(limit).Offset(page).Find(&product).Error
 
 	return product, err
 }

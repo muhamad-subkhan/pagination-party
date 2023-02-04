@@ -4,12 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"math"
 	"net/http"
 	productdto "party/dto/product"
 	dto "party/dto/result"
 	"party/models"
-	"party/pkg/middleware"
 	"party/repositories"
 	"strconv"
 
@@ -190,42 +188,26 @@ func (h *handlerProduct) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 func (h *handlerProduct) FindProduct(w http.ResponseWriter, r *http.Request){
 	w.Header().Set("Content-Type", "application/json")
 
-	// products, err := h.ProductRepositories.FindProduct()
-	// if err != nil {
-	// 	w.WriteHeader(http.StatusInternalServerError)
-	// 	response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
-	// 	json.NewEncoder(w).Encode(response)
-	// 	return
-	// }
+	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
+	if err != nil {
+		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
+		json.NewEncoder(w).Encode(response)
+		return
+	}
 
-	// w.WriteHeader(http.StatusOK)
-	// response := dto.SuccessResult{Code: "Succes", Data: products}
-	// json.NewEncoder(w).Encode(response)
+	page, err := strconv.Atoi(r.URL.Query().Get("page"))
+	if err != nil {
+		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
+		json.NewEncoder(w).Encode(response)
+		return
+	}
 	
-	limit := r.Context().Value(middleware.LimitKey).(int)
-	page := r.Context().Value(middleware.PageKey).(int)
-	offset := (page - 1) * limit
-	
-	ProductList, err := h.ProductRepositories.FindProduct(limit, offset)
+	ProductList, err := h.ProductRepositories.FindProduct(limit, page)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
 		json.NewEncoder(w).Encode(response)
 		return
-	}
-
-	pageInfo := productdto.PageInfo{
-		Size: limit,
-		Current: page,
-		Total: models.GetSize(),
-	}
-
-	pageInfo.TotalPages = int(math.Ceil(float64(pageInfo.Total) / float64(pageInfo.Size)))
-
-	if pageInfo.Current > pageInfo.TotalPages {
-		w.WriteHeader(http.StatusBadRequest)
-		response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
-		json.NewEncoder(w).Encode(response)
 	}
 
 	w.WriteHeader(http.StatusOK)
